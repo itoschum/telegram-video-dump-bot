@@ -1,5 +1,5 @@
 [project]
-name = "tg-video-dump-bot"
+name = "telegram-video-dump-bot"
 version = "0.1.0"
 description = "A Telegram bot that downloads videos via yt-dlp"
 readme = "README.md"
