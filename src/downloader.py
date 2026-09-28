@@ -43,7 +43,7 @@ _INLINE_FORMAT = (
 _FALLBACK_FORMAT = (
     f"bestvideo{_SIZE}+bestaudio{_AAC}"   # any codec + AAC
     f"/bestvideo{_SIZE}+bestaudio"        # any codec + any audio
-    f"/best{_SIZE}"                       # pre-merged stream (no separate tracks)
+    f"/best"                       # pre-merged stream (no separate tracks)
 )
 
 _SORT = ["res", "vcodec:h265:h264", "acodec:mp4a:opus"]
@@ -116,10 +116,10 @@ def _attempt(url: str, fmt: str) -> tuple[str | None, str | None, dict[str, Any]
                 "width": info.get("width"),
                 "height": info.get("height"),
                 "duration": int(info.get("duration") or 0),
-                "spec": spec
+                "spec": spec,
             }
     except YtDlpDownloadError:
-        return None, ""
+        return None, "", {}
 
 def _format_selected_info(info: dict[str, Any]) -> None:
     lines = []
