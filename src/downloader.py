@@ -66,10 +66,10 @@ def _make_opts(fmt: str, tmp_dir: str) -> dict[str, Any]:
         "fragment_retries": 3,
         'remote_components': ['ejs:github'], 
     }
-    cookies_filename = os.getenv("COOKIES_FILENAME")
-    if cookies_filename:
-        opts["cookiefile"] = cookies_filename
-        print("Cookies loaded")
+    cookies_file = os.getenv("COOKIES_FILE")
+    if cookies_file:
+        opts["cookiefile"] = cookies_file
+        print("== Cookies loaded ==")
     return opts
 
 
