@@ -5,7 +5,7 @@ from typing import Any, cast
 import yt_dlp
 from yt_dlp.utils import DownloadError as YtDlpDownloadError
 
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB — Telegram bot upload limit
+MAX_FILE_SIZE = 45 * 1024 * 1024  # 50 MB — Telegram bot upload limit, reserved 5 MB for audio and metadata
 
 _SIZE  = f"[filesize<{MAX_FILE_SIZE}]"
 _AAC = "[acodec*=mp4a]"
