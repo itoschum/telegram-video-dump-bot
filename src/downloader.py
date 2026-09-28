@@ -46,8 +46,7 @@ _FALLBACK_FORMAT = (
     f"/best"                       # pre-merged stream (no separate tracks)
 )
 
-_SORT = ["res", "vcodec:h265:h264", "acodec:mp4a:opus"]
-
+_SORT = ["res", "vcodec:h265:h264:av01:vp9", "acodec:mp4a:opus"]
 
 class DownloadError(Exception):
     """Raised when yt-dlp fails or the file is over the size limit."""
