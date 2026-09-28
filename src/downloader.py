@@ -54,7 +54,7 @@ class DownloadError(Exception):
 
 
 def _make_opts(fmt: str, tmp_dir: str) -> dict[str, Any]:
-    return {
+    opts = {
         "format": fmt,
         "format_sort": _SORT,
         "outtmpl": os.path.join(tmp_dir, "%(title).100B.%(ext)s"),
@@ -64,7 +64,13 @@ def _make_opts(fmt: str, tmp_dir: str) -> dict[str, Any]:
         "no_warnings": False,
         "retries": 3,
         "fragment_retries": 3,
+        'remote_components': ['ejs:github'], 
     }
+    cookies_filename = os.getenv("COOKIES_FILENAME")
+    if cookies_filename:
+        opts["cookiefile"] = cookies_filename
+        print("Cookies loaded")
+    return opts
 
 
 def download_video(url: str) -> tuple[str, str, bool, dict[str, Any]]:
