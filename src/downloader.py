@@ -58,12 +58,16 @@ def _progress_hook(d: dict[str, Any]) -> None:
         print(
             f"\r[download] {d.get('_percent_str', '?')} of {d.get('_total_bytes_str', '?')} "
             f"at {d.get('_speed_str', '?')} ETA {d.get('_eta_str', '?')} "
-            f"[{time.strftime('%H:%M:%S')}]",
+            f"[{time.strftime('%Y-%m-%d %H:%M:%S')}]",
             end="",
             flush=False,
         )
     elif d["status"] == "finished":
-        print(f"[download] Done: {d.get('filename', '')}", flush=False)
+        print(
+            f"\n[download] Done: {d.get('filename', '')}", 
+            f"[{time.strftime('%Y-%m-%d %H:%M:%S')}]",
+            flush=False
+        )
     else:
         print()
         
