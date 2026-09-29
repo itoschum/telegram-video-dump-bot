@@ -84,9 +84,9 @@ def _make_opts(fmt: str, tmp_dir: str, url: str) -> dict[str, Any]:
     }
     
     cookies_file = None
-    if "youtube.com" in url:
+    if "youtube.com" in url or "youtu.be" in url:
         cookies_file = os.getenv("YOUTUBE_COOKIES_FILE")
-    if "bilibili.com" in url:
+    if "bilibili.com" in url or "b23.tv" in url:
         cookies_file = os.getenv("BILIBILI_COOKIES_FILE")
         
     if cookies_file:

@@ -1,6 +1,7 @@
 import os
 import logging
 import asyncio
+import re
 import shutil
 from dotenv import load_dotenv
 from telegram import Update
@@ -78,13 +79,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 @restricted
 async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    url = update.message.text.strip()
-
-    # Basic URL sanity check
-    if not url.startswith(("http://", "https://")):
+    
+    url_match = re.search(r'https?://\S+', update.message.text.strip())
+    if not url_match:
         await update.message.reply_text("❌ Please send a valid URL starting with http:// or https://")
         return
-
+    
+    url = url_match.group(0)
+    
     status_msg = await update.message.reply_text("⏳ Fetching video info…")
     filepath = None
 
