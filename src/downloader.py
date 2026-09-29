@@ -7,8 +7,9 @@ from yt_dlp.utils import DownloadError as YtDlpDownloadError
 
 MAX_FILE_SIZE = 45 * 1024 * 1024  # 50 MB — Telegram bot upload limit, reserved 5 MB for audio and metadata
 
-_SIZE  = f"[filesize<{MAX_FILE_SIZE}]"
-_AAC = "[acodec*=mp4a]"
+# Use _LIMIT / _APPROX_LIMIT to avoid double quoting in yt-dlp's -f option
+_LIMIT = f"[filesize<{MAX_FILE_SIZE}]"
+_APPROX_LIMIT = f"[filesize_approx<{MAX_FILE_SIZE}]"
 
 # ---------------------------------------------------------------------------
 # Format selection
@@ -24,35 +25,35 @@ _AAC = "[acodec*=mp4a]"
 #         Note: -S reorders but never excludes — exclusion is done in -f.
 # ---------------------------------------------------------------------------
 
-
-_INLINE_FORMAT = (
-    # HEVC + AAC
-    f"bestvideo{_SIZE}[vcodec*=hvc]+bestaudio{_AAC}"
-    f"/bestvideo{_SIZE}[vcodec*=hev]+bestaudio{_AAC}"
-    # AVC + AAC
-    f"/bestvideo{_SIZE}[vcodec*=avc]+bestaudio{_AAC}"
-    # AV1 + AAC
-    f"/bestvideo{_SIZE}[vcodec*=av01]+bestaudio{_AAC}"
-    # HEVC / AVC / AV1 + any audio (no AAC available)
-    f"/bestvideo{_SIZE}[vcodec*=hvc]+bestaudio"
-    f"/bestvideo{_SIZE}[vcodec*=hev]+bestaudio"
-    f"/bestvideo{_SIZE}[vcodec*=avc]+bestaudio"
-    f"/bestvideo{_SIZE}[vcodec*=av01]+bestaudio"
-)
-
-_FALLBACK_FORMAT = (
-    f"bestvideo{_SIZE}+bestaudio{_AAC}"   # any codec + AAC
-    f"/bestvideo{_SIZE}+bestaudio"        # any codec + any audio
-    f"/best"                       # pre-merged stream (no separate tracks)
-)
+_INLINE_VCODECS = ["hvc", "hev", "avc", "av01"]
+_AAC = "[acodec*=mp4a]"
 
 _SORT = ["res", "vcodec:h265:h264:av01:vp9", "acodec:mp4a:opus"]
+
+def _build_inline_format() -> str:
+    candidates = []
+    for size_filter in (_LIMIT, _APPROX_LIMIT):
+        for audio in (_AAC, ""):
+            for vcodec in _INLINE_VCODECS:
+                candidates.append(f"bestvideo{size_filter}[vcodec*={vcodec}]+bestaudio{audio}")
+    return "/".join(candidates)
+
+def _build_fallback_format() -> str:
+    candidates = []
+    for size_filter in (_LIMIT, _APPROX_LIMIT):
+        for audio in (_AAC, ""):
+            candidates.append(f"bestvideo{size_filter}+bestaudio{audio}")
+    candidates.append("best")
+    return "/".join(candidates)
+
+_INLINE_FORMAT = _build_inline_format()
+_FALLBACK_FORMAT = _build_fallback_format()
 
 class DownloadError(Exception):
     """Raised when yt-dlp fails or the file is over the size limit."""
 
 
-def _make_opts(fmt: str, tmp_dir: str) -> dict[str, Any]:
+def _make_opts(fmt: str, tmp_dir: str, url: str) -> dict[str, Any]:
     opts = {
         "format": fmt,
         "format_sort": _SORT,
@@ -63,12 +64,19 @@ def _make_opts(fmt: str, tmp_dir: str) -> dict[str, Any]:
         "no_warnings": False,
         "retries": 3,
         "fragment_retries": 3,
-        'remote_components': ['ejs:github'], 
+        "remote_components": ['ejs:github'],
+        "verbose": False,
     }
-    cookies_file = os.getenv("COOKIES_FILE")
+    
+    cookies_file = None
+    if "youtube.com" in url:
+        cookies_file = os.getenv("YOUTUBE_COOKIES_FILE")
+    if "bilibili.com" in url:
+        cookies_file = os.getenv("BILIBILI_COOKIES_FILE")
+        
     if cookies_file:
         opts["cookiefile"] = cookies_file
-        print("== Cookies loaded ==")
+        print("\n== Cookies Loaded ==")
     return opts
 
 
@@ -107,7 +115,7 @@ def _attempt(url: str, fmt: str) -> tuple[str | None, str | None, dict[str, Any]
     """Run one download attempt. Returns (filepath, title) or (None, '') on failure."""
     tmp_dir = tempfile.mkdtemp()
     try:
-        ydl_instance = yt_dlp.YoutubeDL(cast(Any, _make_opts(fmt, tmp_dir)))
+        ydl_instance = yt_dlp.YoutubeDL(cast(Any, _make_opts(fmt, tmp_dir, url)))
         with ydl_instance as ydl:
             info = ydl.extract_info(url, download=True)
             if "entries" in info:
