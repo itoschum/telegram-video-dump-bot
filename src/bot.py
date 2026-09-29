@@ -137,7 +137,7 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         # Always clean up the temp file
         if filepath and os.path.exists(filepath):
             try:
-                print("Temp File Path:", filepath)
+                print("\n[file path]", filepath)
                 os.remove(filepath)
             except OSError as e:
                 logger.warning("Could not delete temp file %s: %s", filepath, e)

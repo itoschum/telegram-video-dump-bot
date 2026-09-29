@@ -1,6 +1,7 @@
 import os
 import tempfile
 from typing import Any, cast
+import time
 
 import yt_dlp
 from yt_dlp.utils import DownloadError as YtDlpDownloadError
@@ -51,8 +52,21 @@ _FALLBACK_FORMAT = _build_fallback_format()
 
 class DownloadError(Exception):
     """Raised when yt-dlp fails or the file is over the size limit."""
-
-
+                
+def _progress_hook(d: dict[str, Any]) -> None:
+    if d["status"] == "downloading":
+        print(
+            f"\r[download] {d.get('_percent_str', '?')} of {d.get('_total_bytes_str', '?')} "
+            f"at {d.get('_speed_str', '?')} ETA {d.get('_eta_str', '?')} "
+            f"[{time.strftime('%H:%M:%S')}]",
+            end="",
+            flush=False,
+        )
+    elif d["status"] == "finished":
+        print(f"[download] Done: {d.get('filename', '')}", flush=False)
+    else:
+        print()
+        
 def _make_opts(fmt: str, tmp_dir: str, url: str) -> dict[str, Any]:
     opts = {
         "format": fmt,
@@ -66,6 +80,7 @@ def _make_opts(fmt: str, tmp_dir: str, url: str) -> dict[str, Any]:
         "fragment_retries": 3,
         "remote_components": ['ejs:github'],
         "verbose": False,
+        "progress_hooks": [_progress_hook],
     }
     
     cookies_file = None
@@ -76,7 +91,7 @@ def _make_opts(fmt: str, tmp_dir: str, url: str) -> dict[str, Any]:
         
     if cookies_file:
         opts["cookiefile"] = cookies_file
-        print("\n== Cookies Loaded ==")
+        print("\n== cookies loaded ==")
     return opts
 
 
