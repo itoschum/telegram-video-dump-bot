@@ -17,23 +17,35 @@ from downloader import download_video, DownloadError
 load_dotenv()
 
 class SensitiveFilter(logging.Filter):
+    def __init__(self) -> None:
+        super().__init__()
+        self._token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+
     def filter(self, record: logging.LogRecord) -> bool:
-        token = os.getenv("TELEGRAM_TOKEN", "")
-        if token:
-            record.msg = str(record.msg).replace(token, "***")
+        if self._token:
+            full_msg = record.getMessage()
+            if self._token in full_msg:
+                record.msg = record.getMessage().replace(self._token, "********")
+                record.args = None  # prevent double formatting
         return True
+    
 class SuppressGetUpdates(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
-        return "getUpdates" not in str(record.msg)
+        full_msg = record.getMessage()  # formats msg + args together
+        return "getUpdates" not in full_msg
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-)
-logging.getLogger().addFilter(SensitiveFilter())
-logging.getLogger("httpx").addFilter(SuppressGetUpdates())
 
-logger = logging.getLogger(__name__)
+def setup_logging():
+    logging.basicConfig(
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        level=logging.INFO,
+    )
+    logging.getLogger("httpx").addFilter(SensitiveFilter())
+    logging.getLogger("httpx").addFilter(SuppressGetUpdates())
+
+    return logging.getLogger(__name__)
+
+logger = setup_logging()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 if not TELEGRAM_BOT_TOKEN:
