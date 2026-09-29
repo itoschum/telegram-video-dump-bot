@@ -16,11 +16,23 @@ from downloader import download_video, DownloadError
 
 load_dotenv()
 
+class SensitiveFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        token = os.getenv("TELEGRAM_TOKEN", "")
+        if token:
+            record.msg = str(record.msg).replace(token, "***")
+        return True
+class SuppressGetUpdates(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "getUpdates" not in str(record.msg)
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
-logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger().addFilter(SensitiveFilter())
+logging.getLogger("httpx").addFilter(SuppressGetUpdates())
+
 logger = logging.getLogger(__name__)
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
